@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AltStore Multi-Repo Viewer</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #121212;
+    color: #eee;
+    margin: 0;
+    padding: 20px;
+  }
+  h1, h2, h3 {
+    text-align: center;
+  }
+  .repo-section {
+    margin-top: 40px;
+  }
+  .apps, .news {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+  }
+  .app-card, .news-card {
+    background: #1e1e1e;
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .app-card img, .news-card img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  .app-card h3, .news-card h3 {
+    margin: 5px 0;
+    text-align: center;
+  }
+  .app-card p {
+    font-size: 0.85em;
+    text-align: center;
+    margin: 3px 0;
+    color: #aaa;
+  }
+  .app-card a, .news-card a {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #4fc3f7;
+    color: #000;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+  }
+  .screenshot {
+    width: 100%;
+    margin: 5px 0;
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h1>AltStore Multi-Repo Viewer</h1>
+
+<div id="reposContainer">Loading repositories...</div>
+
+<script>
+const repoURLs = [
+  'dolphin-ios-repo.json',
+  'cypwn-repo.json'
+
+];
+
+async function loadRepos() {
+  const container = document.getElementById('reposContainer');
+  container.innerHTML = '';
+  
+  for (const url of repoURLs) {
+    try {
+      const res = await fetch(url);
+      const repo = await res.json();
+
+      const repoSection = document.createElement('div');
+      repoSection.classList.add('repo-section');
+
+      // Repo Name
+      const repoName = document.createElement('h2');
+      repoName.innerText = repo.name || 'AltStore Repo';
+      repoSection.appendChild(repoName);
+
+      // Apps
+      const appsContainer = document.createElement('div');
+      appsContainer.classList.add('apps');
+      repo.apps.forEach(app => {
+        const appDiv = document.createElement('div');
+        appDiv.classList.add('app-card');
+        const screenshotsHTML = app.screenshotURLs ? app.screenshotURLs.map(url => `<img class="screenshot" src="${url}">`).join('') : '';
+        appDiv.innerHTML = `
+          <img src="${app.iconURL}" alt="${app.name}">
+          <h3>${app.name}</h3>
+          <p><strong>${app.subtitle || ''}</strong></p>
+          <p>Developer: ${app.developerName}</p>
+          <p>Latest Version: ${app.version}</p>
+          ${screenshotsHTML}
+          <a href="${app.downloadURL}" target="_blank">Download</a>
+        `;
+        appsContainer.appendChild(appDiv);
+      });
+      repoSection.appendChild(appsContainer);
+
+      // News
+      const newsContainer = document.createElement('div');
+      newsContainer.classList.add('news');
+      if (repo.news) {
+        repo.news.forEach(item => {
+          const newsDiv = document.createElement('div');
+          newsDiv.classList.add('news-card');
+          newsDiv.innerHTML = `
+            <img src="${item.imageURL}" alt="${item.title}">
+            <h3>${item.title}</h3>
+            <p>${item.caption}</p>
+            <a href="${item.url}" target="_blank">Read More</a>
+          `;
+          newsContainer.appendChild(newsDiv);
+        });
+      } else {
+        newsContainer.innerHTML = '<p>No news available.</p>';
+      }
+      repoSection.appendChild(newsContainer);
+
+      container.appendChild(repoSection);
+
+    } catch(err) {
+      console.error(err);
+      const errorDiv = document.createElement('p');
+      errorDiv.innerText = `Failed to load repo from ${url}`;
+      container.appendChild(errorDiv);
+    }
+  }
+}
+
+loadRepos();
+</script>
+
+</body>
+</html>
